@@ -3,10 +3,10 @@ PowerCLI
 https://www.powershellgallery.com/packages/VMware.PowerCLI/11.5.0.14912921
 #>
 
-#Àsƒ|ƒŠƒV[İ’è
+#å®Ÿè¡Œãƒãƒªã‚·ãƒ¼è¨­å®š
 Set-ExecutionPolicy RemoteSigned
 
-###“®ìƒpƒ‰ƒ[ƒ^[’è‹`
+###å‹•ä½œãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ¼å®šç¾©
 #1
 $old_vcenter = '192.168.20.97'
 $old_admin = 'administrator'
@@ -20,40 +20,40 @@ $new_vmhost = '192.168.20.91'
 
 # 
 ##2
-#ƒGƒNƒXƒ|[ƒgæ‚ÌƒpƒX
+#ã‚¨ã‚¯ã‚¹ãƒãƒ¼ãƒˆå…ˆã®ãƒ‘ã‚¹
 $vm_export_path ='C:\export_vms'
-#ƒGƒNƒXƒ|[ƒg‚·‚é‰¼‘zƒ}ƒVƒ“–¼‚Ì”z—ñ
+#ã‚¨ã‚¯ã‚¹ãƒãƒ¼ãƒˆã™ã‚‹ä»®æƒ³ãƒã‚·ãƒ³åã®é…åˆ—
 $vm_target = 'ws2012_01','ws2012_02'
 #
 ###
 
-#PowerCLIİ’è11.5.0
+#PowerCLIè¨­å®š11.5.0
 $set_powercli = Set-PowerCLIConfiguration -Scope AllUsers -InvalidCertificateAction Ignore -ParticipateInCeip $false -Confirm:$false -WebOperationTimeoutSeconds 144000
 
-
+#ä»®æƒ³æ¯ã«å‡¦ç†
 foreach($i_vm in $vm_target)
 {
-    #‹ŒvCenterÚ‘±
+    #æ—§vCenteræ¥ç¶š
     Connect-VIServer -Server $old_vcenter -Protocol https -User $old_admin -Password $old_admin_pass
 
-    #VMƒIƒuƒWƒFƒNƒgæ“¾
+    #VMã‚ªãƒ–ã‚¸ã‚§ã‚¯ãƒˆå–å¾—
     $vm = Get-VM -Name $i_vm -Server $old_vcenter
 
-    #‰¼‘zƒ}ƒVƒ“ƒGƒNƒXƒ|[ƒg
+    #ä»®æƒ³ãƒã‚·ãƒ³ã‚¨ã‚¯ã‚¹ãƒãƒ¼ãƒˆ
     Export-VApp -Destination $vm_target -VM $vm -Format Ovf
 
-    #‹ŒvCenterØ’f
+    #æ—§vCenteråˆ‡æ–­
     Disconnect-VIServer -Server $old_vcenter -Force -Confirm:$false
 
-    #VvCenter‚ÖÚ‘±
+    #æ–°vCenterã¸æ¥ç¶š
     Connect-VIServer -Server $new_vcenter -Protocol https -User $new_admin -Password $new_admin_pass
 
-    #‰¼‘zƒ}ƒVƒ“ƒCƒ“ƒ|[ƒg
+    #ä»®æƒ³ãƒã‚·ãƒ³ã‚¤ãƒ³ãƒãƒ¼ãƒˆ
     $myDatastore = Get-Datastore -Name $new_ds -Server $new_vcenter
     $vmHost = Get-VMHost -Name $new_vmhost
     $vmHost | Import-vApp -Source "C:\export_vms\ws2012_02\ws2012_02.ovf" -Datastore $myDatastore -Force
 
-    #VvCenterØ’f
+    #æ–°vCenteråˆ‡æ–­
     Disconnect-VIServer -Server $new_vcenter -Force -Confirm:$false
 }
 
