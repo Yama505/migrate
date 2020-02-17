@@ -1,4 +1,5 @@
 <#
+migrate_vm_02.ps1
 PowerCLI
 https://www.powershellgallery.com/packages/VMware.PowerCLI/11.5.0.14912921
 #>
@@ -26,7 +27,6 @@ $vm_export_path ='C:\export_vms_20200217'
 $vm_target = 'ws2012_01','ws2012_02'
 #$vm_target = 'ws2012_03'
 
-
 ##
 ##3
 $log_filename = 'migrate_vm_log.txt'
@@ -49,6 +49,7 @@ if((Test-Path $vm_export_path) -eq $false)
 {
     New-Item -Path $vm_export_path -ItemType Directory | Out-Null
 }
+
 
 #PowerCLIê›íË11.5.0
 $set_powercli = Set-PowerCLIConfiguration -Scope AllUsers -InvalidCertificateAction Ignore -ParticipateInCeip $false -Confirm:$false -WebOperationTimeoutSeconds 144000
