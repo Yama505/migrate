@@ -52,7 +52,7 @@ if((Test-Path $vm_export_path) -eq $false)
 
 
 #PowerCLIê›íË11.5.0
-$set_powercli = Set-PowerCLIConfiguration -Scope AllUsers -InvalidCertificateAction Ignore -ParticipateInCeip $false -Confirm:$false -WebOperationTimeoutSeconds 144000
+Set-PowerCLIConfiguration -Scope AllUsers -InvalidCertificateAction Ignore -ParticipateInCeip $false -Confirm:$false -WebOperationTimeoutSeconds 144000  | Out-Null
 
 foreach($i_vm in $vm_target)
 {
