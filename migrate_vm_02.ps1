@@ -61,17 +61,17 @@ foreach($i_vm in $vm_target)
     Connect-VIServer -Server $old_vcenter -Protocol https -User $old_admin -Password $old_admin_pass | Out-Null
 
     #VMオブジェクト取得
-    $old_vms = Get-VM -Server $old_vcenter
-    foreach($old_vm in $old_vms)
+    $target_vms = Get-VM -Server $old_vcenter
+    foreach($target_vm in $target_vms)
     {
         #ターゲットの仮想マシン名が旧vCenterにヒットすれば
-        if($old_vm.Name -eq $i_vm)
+        if($target_vm.Name -eq $i_vm)
         {
             #仮想マシンエクスポート
-            $msg = $old_vm.Name + 'のエクスポート開始'
+            $msg = $target_vm.Name + 'のエクスポート開始'
             WriteLog($msg)
-            Export-VApp -Destination $vm_export_path -VM $old_vm -Format Ovf | Out-Null
-            $msg = $old_vm.Name + 'のエクスポート終了'
+            Export-VApp -Destination $vm_export_path -VM $target_vm -Format Ovf | Out-Null
+            $msg = $target_vm.Name + 'のエクスポート終了'
             WriteLog($msg)
     
             #旧vCenter切断
@@ -85,7 +85,7 @@ foreach($i_vm in $vm_target)
             #仮想マシンインポート
             $myDatastore = Get-Datastore -Name $new_ds -Server $new_vcenter
             $vmHost = Get-VMHost -Name $new_vmhost
-            $ovf_path = $vm_export_path + '\' + $old_vm.Name + '\' + $old_vm.Name + '.ovf'
+            $ovf_path = $vm_export_path + '\' + $target_vm.Name + '\' + $target_vm.Name + '.ovf'
     
             $msg = $i_vm + 'のインポート開始'
             WriteLog($msg)
