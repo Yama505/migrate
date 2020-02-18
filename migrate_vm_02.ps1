@@ -24,7 +24,7 @@ $new_vmhost = '192.168.20.91'
 #エクスポート先のパス
 $vm_export_path ='C:\export_vms_20200217'
 #エクスポートする仮想マシン名の配列
-$vm_target = 'ws2012_01','ws2012_02'
+$vm_target = 'ws2012_01','ws2012_03'
 #$vm_target = 'ws2012_03'
 
 ##
