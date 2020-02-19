@@ -9,7 +9,7 @@ Set-ExecutionPolicy RemoteSigned
 
 ###動作パラメーター定義
 ##1初期情報
-#スクリプト開始時刻
+#スクリプト開始時刻の取得
 $start_time = Get-Date -Format "yyyyMMddHHmmss"
 
 ##1ログファイル名
