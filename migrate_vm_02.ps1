@@ -82,12 +82,15 @@ foreach($i_vm in $vm_target)
         if($source_vm.Name -eq $i_vm)
         {
             #電源ステータス確認
+            #ステータスがpoweroffだったらOK
             $source_vm.PowerState
 
             #スナップショット確認
+            #スナップショットがなければOK
             Get-Snapshot -vm $source_vm.Name
 
             #CDドライブ状態確認
+            #メディアがなければOK
             Get-CDDrive -vm $source_vm.Name
 
             #仮想マシンエクスポート
