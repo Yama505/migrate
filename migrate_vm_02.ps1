@@ -8,31 +8,36 @@ https://www.powershellgallery.com/packages/VMware.PowerCLI/11.5.0.14912921
 Set-ExecutionPolicy RemoteSigned
 
 ###動作パラメーター定義
-#1
+##1初期情報
+#スクリプト開始時刻
+$start_time = Get-Date -Format "yyyyMMddhhmmss"
+
+##1ログファイル名
+$log_name = '_migrate_vm_log.txt'
+$log_filename = $start_time + $log_name
+##
+##2vCenter情報
+#移行元vCenter接続情報
 $old_vcenter = '192.168.20.97'
 $old_admin = 'administrator'
 $old_admin_pass = '!!!Password123'
-
+#移行先vCenter接続情報
 $new_vcenter = '192.168.20.96'
 $new_admin = 'administrator@vsphere.local'
 $new_admin_pass = '!!!Password123'
 $new_ds = 'datastore2'
 $new_vmhost = '192.168.20.91'
-
-##
-##2
-#エクスポート先のパス
-$vm_export_path ='C:\export_vms_20200217'
-#エクスポートする仮想マシン名の配列
-$vm_target = 'ws2012_01','ws2012_02'
-#$vm_target = 'ws2012_03'
-
 ##
 ##3
-$log_filename = 'migrate_vm_log.txt'
+#エクスポート先のパス
+$vm_export_path ='C:\export_vms_' + $start_time
+#エクスポートする仮想マシン名の配列
+$vm_target = 'ws2012_01','ws2012_03'
+#$vm_target = 'ws2012_03'
+##
 ###
 
-###
+###関数
 ###Log書き込み
 function WriteLog($line){
     $logtime = Get-Date
@@ -41,7 +46,7 @@ function WriteLog($line){
 }
 ###
 
-###開始
+###メイン
 WriteLog('スクリプトの開始')
 
 #エクスポート先フォルダ確認と作成
@@ -49,7 +54,6 @@ if((Test-Path $vm_export_path) -eq $false)
 {
     New-Item -Path $vm_export_path -ItemType Directory | Out-Null
 }
-
 
 #PowerCLI設定11.5.0
 Set-PowerCLIConfiguration -Scope AllUsers -InvalidCertificateAction Ignore -ParticipateInCeip $false -Confirm:$false -WebOperationTimeoutSeconds 144000  | Out-Null
@@ -101,3 +105,5 @@ foreach($i_vm in $vm_target)
 }
 
 WriteLog('スクリプトの終了')
+###
+
