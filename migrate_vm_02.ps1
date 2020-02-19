@@ -1,5 +1,6 @@
 <#
 migrate_vm_02.ps1
+202002191730
 PowerCLI
 https://www.powershellgallery.com/packages/VMware.PowerCLI/11.5.0.14912921
 #>
