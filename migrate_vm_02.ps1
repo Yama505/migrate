@@ -81,6 +81,15 @@ foreach($i_vm in $vm_target)
         #ターゲットの仮想マシン名が移行元にあれば
         if($source_vm.Name -eq $i_vm)
         {
+            #電源ステータス確認
+            $source_vm.PowerState
+
+            #スナップショット確認
+            Get-Snapshot -vm $source_vm.Name
+
+            #CDドライブ状態確認
+            Get-CDDrive -vm $source_vm.Name
+
             #仮想マシンエクスポート
             $msg = $source_vm.Name + 'のエクスポート開始'
             WriteLog($msg)
