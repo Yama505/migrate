@@ -70,7 +70,7 @@ Set-PowerCLIConfiguration -Scope AllUsers -InvalidCertificateAction Ignore -Part
 
 foreach($i_vm in $vm_target)
 {
-    #旧vCenter接続
+    #移行元vCenter接続
     WriteLog('移行元vCenter接続')
     Connect-VIServer -Server $source_vcenter -Protocol https -User $source_admin -Password $source_admin_pass | Out-Null
 
@@ -132,7 +132,7 @@ foreach($i_vm in $vm_target)
                 $msg = $i_vm + 'のインポート終了'
                 WriteLog($msg)
             }
-            #新vCenter切断
+            #移行先vCenter切断
             WriteLog('移行先vCenter切断')
             Disconnect-VIServer -Server $destination_vcenter -Force -Confirm:$false
         }
