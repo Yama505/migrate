@@ -111,22 +111,25 @@ foreach($i_vm in $vm_target)
             #メディアがなければOK
             $vmcd = $null
             $vmcd = Get-CDDrive -VM $source_vm | Select-Object Name,IsoPath,HostDevice,RemoteDevice | Sort-Object Name
-            #CD有り無しフラグ初期化
+            #CD有無フラグ初期化
             $cd_f = 0
             foreach($cd in $vmcd)
             {
-                #CDがあるか
+                #CD有無判定
                 if(-Not([string]::IsNullOrEmpty($cd.IsoPath + $cd.HostDevice + $cd.RemoteDevice)))
                 {
+                    #CD有無フラグ設定
                     $cd_f = 1
                 }
             }
             #
+            #CD有り
             if($cd_f -eq 1)
             {
                 WriteLog($source_vm.Name + 'はメディアがあります')
                 $export_f = 1
             }
+            #CDなし
             else {
                 WriteLog($source_vm.Name + 'はメディアはありません')
             }
@@ -189,8 +192,14 @@ foreach($i_vm in $vm_target)
 }
 
 #インポートしなかったリスト
-$msg = '移行先仮想マシン名重複によりインポートしなかった仮想マシン : ' + $destination_dep_vm
-WriteLog($msg)
+if($destination_dep_vm -eq 0)
+{
+    WriteLog('エクスポートが完了した仮想マシンでインポートをスキップした仮想マシンはありません')
+}
+else {
+    $msg = 'エクスポート完了後、移行先仮想マシン名重複によりインポートしなかった仮想マシン : ' + $destination_dep_vm
+    WriteLog($msg)      
+}
 #
 
 WriteLog('スクリプトの終了')
