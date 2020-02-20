@@ -13,9 +13,14 @@ $start_time = Get-Date -Format "yyyyMMddHHmmss"
 
 ###動作パラメーター定義
 #移行先vCenter接続情報
+$destination_vcenter = '192.168.20.97'
+$destination_admin = 'administrator'
+$destination_admin_pass = '!!!Password123'
+
 $destination_vcenter = '192.168.20.96'
 $destination_admin = 'administrator@vsphere.local'
 $destination_admin_pass = '!!!Password123'
+
 $log_name = 'vm_info_'
 $log_filename = $log_name + $start_time + '.txt'
 ##

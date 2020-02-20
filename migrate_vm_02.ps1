@@ -68,8 +68,12 @@ else {
 #PowerCLI設定（11.5.0）
 Set-PowerCLIConfiguration -Scope AllUsers -InvalidCertificateAction Ignore -ParticipateInCeip $false -Confirm:$false -WebOperationTimeoutSeconds 144000  | Out-Null
 
+#移行対象分処理
 foreach($i_vm in $vm_target)
 {
+    #エクスポート実行フラグ
+    $export_f = 0
+
     #移行元vCenter接続
     WriteLog('移行元vCenter接続')
     Connect-VIServer -Server $source_vcenter -Protocol https -User $source_admin -Password $source_admin_pass | Out-Null
@@ -83,58 +87,103 @@ foreach($i_vm in $vm_target)
         {
             #電源ステータス確認
             #ステータスがpoweroffだったらOK
-            $source_vm.PowerState
+            if($source_vm.PowerState -ne 'PoweredOff')
+            {
+                WriteLog($source_vm.Name + 'は電源がオフではありません')
+                $export_f = 1
+            }
+            else {
+                WriteLog($source_vm.Name + 'は電源がオフです')
+            }
 
             #スナップショット確認
             #スナップショットがなければOK
-            Get-Snapshot -vm $source_vm.Name
+            if((Get-Snapshot -vm $source_vm | Measure-Object).Count -eq 0)
+            {
+                WriteLog($source_vm.Name + 'はスナップショットはありません')
+            }
+            else {
+                WriteLog($source_vm.Name + 'はスナップショットがあります')
+                $export_f = 1
+            }
 
             #CDドライブ状態確認
             #メディアがなければOK
-            Get-CDDrive -vm $source_vm.Name
-
-            #仮想マシンエクスポート
-            $msg = $source_vm.Name + 'のエクスポート開始'
-            WriteLog($msg)
-            Export-VApp -Destination $vm_export_path -VM $source_vm -Format Ovf | Out-Null
-            $msg = $source_vm.Name + 'のエクスポート終了'
-            WriteLog($msg)
-    
-            #移行元vCenter切断
-            WriteLog('移行元vCenter切断')
-            Disconnect-VIServer -Server $source_vcenter -Force -Confirm:$false
-    
-            #移行先vCenterへ接続
-            WriteLog('移行先vCenter接続')
-            Connect-VIServer -Server $destination_vcenter -Protocol https -User $destination_admin -Password $destination_admin_pass | Out-Null
-
-            #移行先仮想マシン重複チェック
-            $destination_vmlist = Get-vm -Server $destination_vcenter
-            foreach($destination_vm in $destination_vmlist)
+            $vmcd = $null
+            $vmcd = Get-CDDrive -VM $source_vm | Select-Object Name,IsoPath,HostDevice,RemoteDevice | Sort-Object Name
+            #CD有り無しフラグ初期化
+            $cd_f = 0
+            foreach($cd in $vmcd)
             {
-                if($source_vm.Name -eq $destination_vm.Name)
+                #CDがあるか
+                if(-Not([string]::IsNullOrEmpty($cd.IsoPath + $cd.HostDevice + $cd.RemoteDevice)))
                 {
-                    $dep_flag = 1
-                    $destination_dep_vm += $source_vm.Name
+                    $cd_f = 1
                 }
             }
-            #移行先に重複がなければインポート
-            if($dep_flag -eq 0)
+            #
+            if($cd_f -eq 1)
             {
-                #仮想マシンインポート
-                $myDatastore = Get-Datastore -Name $destination_ds -Server $destination_vcenter
-                $vmHost = Get-VMHost -Name $destination_vmhost
-                $ovf_path = $vm_export_path + '\' + $source_vm.Name + '\' + $source_vm.Name + '.ovf'
-        
-                $msg = $i_vm + 'のインポート開始'
-                WriteLog($msg)
-                $vmHost | Import-vApp -Source $ovf_path -Datastore $myDatastore -Force | Out-Null
-                $msg = $i_vm + 'のインポート終了'
-                WriteLog($msg)
+                WriteLog($source_vm.Name + 'はメディアがあります')
+                $export_f = 1
             }
-            #移行先vCenter切断
-            WriteLog('移行先vCenter切断')
-            Disconnect-VIServer -Server $destination_vcenter -Force -Confirm:$false
+            else {
+                WriteLog($source_vm.Name + 'はメディアはありません')
+            }
+
+            #エクスポートチェックが通ったら
+            if($export_f -eq 0)
+            {
+                #仮想マシンエクスポート
+                $msg = $source_vm.Name + 'のエクスポート開始'
+                WriteLog($msg)
+                Export-VApp -Destination $vm_export_path -VM $source_vm -Format Ovf | Out-Null
+                $msg = $source_vm.Name + 'のエクスポート終了'
+                WriteLog($msg)
+
+                #移行元vCenter切断
+                WriteLog('移行元vCenter切断')
+                Disconnect-VIServer -Server $source_vcenter -Force -Confirm:$false
+        
+                #移行先vCenterへ接続
+                WriteLog('移行先vCenter接続')
+                Connect-VIServer -Server $destination_vcenter -Protocol https -User $destination_admin -Password $destination_admin_pass | Out-Null
+
+                #移行先仮想マシン重複チェック
+                $destination_vmlist = Get-vm -Server $destination_vcenter
+                foreach($destination_vm in $destination_vmlist)
+                {
+                    if($source_vm.Name -eq $destination_vm.Name)
+                    {
+                        $dep_flag = 1
+                        $destination_dep_vm += $source_vm.Name
+                    }
+                }
+
+                #移行先に重複がなければインポート
+                if($dep_flag -eq 0)
+                {
+                    #仮想マシンインポート
+                    $myDatastore = Get-Datastore -Name $destination_ds -Server $destination_vcenter
+                    $vmHost = Get-VMHost -Name $destination_vmhost
+                    $ovf_path = $vm_export_path + '\' + $source_vm.Name + '\' + $source_vm.Name + '.ovf'
+            
+                    $msg = $i_vm + 'のインポート開始'
+                    WriteLog($msg)
+                    $vmHost | Import-vApp -Source $ovf_path -Datastore $myDatastore -Force | Out-Null
+                    $msg = $i_vm + 'のインポート終了'
+                    WriteLog($msg)
+                }
+                else {
+                    WriteLog($source_vm.Name + 'は移行先に同一仮想マシン名があります')
+                }
+                #移行先vCenter切断
+                WriteLog('移行先vCenter切断')
+                Disconnect-VIServer -Server $destination_vcenter -Force -Confirm:$false
+            }
+            else {
+                WriteLog($source_vm.Name + 'はエクスポートせずに次の仮想マシンへスキップします')
+            }
         }
     }
 }
