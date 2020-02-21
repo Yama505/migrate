@@ -183,6 +183,8 @@ foreach($i_vm in $vm_target)
                 #移行先vCenter切断
                 WriteLog('移行先vCenter切断')
                 Disconnect-VIServer -Server $destination_vcenter -Force -Confirm:$false
+                #インポート前仮想マシン重複フラグ初期化
+                $dep_flag = 0
             }
             else {
                 WriteLog($source_vm.Name + 'はエクスポートせずに次の仮想マシンへスキップします')
@@ -192,7 +194,7 @@ foreach($i_vm in $vm_target)
 }
 
 #インポートしなかったリスト
-if($destination_dep_vm -eq 0)
+if([string]::IsNullOrEmpty($destination_dep_vm))
 {
     WriteLog('エクスポートが完了した仮想マシンでインポートをスキップした仮想マシンはありません')
 }
