@@ -53,6 +53,20 @@ function WriteLog($line){
 ###メイン
 WriteLog('スクリプトの開始')
 
+#パラメーター目視確認
+Write-Host 'パラメータ確認'
+Write-Host '移行元vCenterサーバー：' $source_vcenter
+Read-Host "キー入力待ち"
+Write-Host '移行先vCenterサーバー：' $destination_vcenter
+Read-Host "キー入力待ち"
+Write-Host '移行先データストア：' $destination_ds
+Read-Host "キー入力待ち"
+Write-Host '移行先仮想ホスト：'　$destination_vmhost
+Read-Host "キー入力待ち"
+Write-Host '移行対象仮想マシン：' $vm_target
+Read-Host "キー入力待ち"
+
+
 #エクスポート先ディレクトリ確認と作成
 if((Test-Path $vm_export_path) -eq $true)
 {
