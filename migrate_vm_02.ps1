@@ -1,6 +1,9 @@
 <#
 migrate_vm_02.ps1
 20200303135900
+1.PSCredentialを利用してパスワードを記載しないように変更した
+2.パラメータを確認できるようにした
+
 PowerCLI
 https://www.powershellgallery.com/packages/VMware.PowerCLI/11.5.0.14912921
 #>
@@ -20,12 +23,12 @@ $log_filename = $start_time + $log_name
 ##2vCenter情報
 #移行元vCenter接続情報
 $source_vcenter = '192.168.20.97'
-$source_admin = 'administrator'
-$source_admin_pass = '!!!Password123'
+#$source_admin = 'administrator'
+#$source_admin_pass = '!!!Password123'
 #移行先vCenter接続情報
 $destination_vcenter = '192.168.20.96'
-$destination_admin = 'administrator@vsphere.local'
-$destination_admin_pass = '!!!Password123'
+#$destination_admin = 'administrator@vsphere.local'
+#$destination_admin_pass = '!!!Password123'
 $destination_ds = 'datastore2'
 $destination_vmhost = '192.168.20.91'
 #インポート前仮想マシン名重複チェック変数
@@ -37,7 +40,7 @@ $destination_dep_vm = @() #重複仮想マシンリスト
 $vm_export_path ='C:\export_vms_' + $start_time
 #エクスポートする仮想マシン名の配列
 $vm_target = 'ws2012_01','ws2012_03','ws2012_02'
-#$vm_target = 'ws2012_02'
+#$vm_target = 'ws2012_03'
 ##
 ###
 
@@ -56,11 +59,13 @@ WriteLog('スクリプトの開始')
 #パラメーター目視確認
 #確認パラメータの表示
 Write-Host '[パラメータを確認]'
+Write-Host "移行対象仮想マシン`t:" $vm_target
 Write-Host "移行元vCenterサーバー`t：" $source_vcenter
 Write-Host "移行先vCenterサーバー`t：" $destination_vcenter
 Write-Host "移行先データストア`t：" $destination_ds
 Write-Host "移行先仮想ホスト`t："　$destination_vmhost
 Write-Host "移行対象仮想マシン`t：" $vm_target
+Write-Host "エクスポートフォルダ`t:" $vm_export_path
 
 #判断待ち
 $key = Read-Host "問題ないので継続（Y）,問題あるので中断（N）,デフォルト（N）"
@@ -88,6 +93,36 @@ else {
 #PowerCLI設定（11.5.0）
 Set-PowerCLIConfiguration -Scope AllUsers -InvalidCertificateAction Ignore -ParticipateInCeip $false -Confirm:$false -WebOperationTimeoutSeconds 144000  | Out-Null
 
+#事前接続テスト
+do{
+    $source_cred = Get-Credential  -Message '【移行元のvCenter接続アカウント情報】'
+    $s_v = Connect-VIServer -Server $source_vcenter -Protocol https -Credential $source_cred -ErrorAction SilentlyContinue
+}while($null -eq $s_v)
+Write-Host $s_v.Name  $s_v.SessionId
+Get-vm -Server $source_vcenter
+Disconnect-VIServer -Server $source_vcenter -Force -Confirm:$false
+Write-Host "`r`n"
+
+do {
+    $destination_cred = Get-Credential -Message '【移行先のvCenter接続アカウント情報】'
+    $d_v = Connect-VIServer -Server $destination_vcenter -Protocol https -Credential $destination_cred -ErrorAction SilentlyContinue
+}while($null -eq $d_v)
+Write-Host $d_v.Name  $d_v.SessionId
+Get-Datastore -Name $destination_ds | Select-Object Name,State,CapacityGB,FreeSpaceGB
+Get-VMHost -Name $destination_vmhost | Select-Object Name,PowerState
+Disconnect-VIServer -Server $destination_vcenter -Force -Confirm:$false
+
+#最終確認
+$key = $null
+$key = Read-Host "本当にスクリプトを実行しますか？`r`n継続（Y）,問題あるので中断（N）,デフォルト（N）"
+
+#最終判断処理
+$key
+switch ($key) {
+    'Y' { Write-Host "スクリプトを継続します`r`n"  }
+    Default { Write-Host "スクリプトを中断します`r`n" ; exit }
+}
+
 #移行対象分処理
 foreach($i_vm in $vm_target)
 {
@@ -96,7 +131,7 @@ foreach($i_vm in $vm_target)
 
     #移行元vCenter接続
     WriteLog('移行元vCenter接続')
-    Connect-VIServer -Server $source_vcenter -Protocol https -User $source_admin -Password $source_admin_pass | Out-Null
+    Connect-VIServer -Server $source_vcenter -Protocol https -Credential $source_cred | Out-Null
 
     #VMオブジェクト取得
     $source_vmlist = Get-VM -Server $source_vcenter
@@ -170,7 +205,7 @@ foreach($i_vm in $vm_target)
         
                 #移行先vCenterへ接続
                 WriteLog('移行先vCenter接続')
-                Connect-VIServer -Server $destination_vcenter -Protocol https -User $destination_admin -Password $destination_admin_pass | Out-Null
+                Connect-VIServer -Server $destination_vcenter -Protocol https -Credential $destination_cred | Out-Null
 
                 #移行先仮想マシン重複チェック
                 $destination_vmlist = Get-vm -Server $destination_vcenter
@@ -226,4 +261,3 @@ else {
 
 WriteLog('スクリプトの終了')
 ###
-
