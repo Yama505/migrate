@@ -1,6 +1,6 @@
 <#
 migrate_vm_02.ps1
-202002191730
+20200303135900
 PowerCLI
 https://www.powershellgallery.com/packages/VMware.PowerCLI/11.5.0.14912921
 #>
@@ -54,17 +54,23 @@ function WriteLog($line){
 WriteLog('スクリプトの開始')
 
 #パラメーター目視確認
-Write-Host 'パラメータ確認'
-Write-Host '移行元vCenterサーバー：' $source_vcenter
-Read-Host "キー入力待ち"
-Write-Host '移行先vCenterサーバー：' $destination_vcenter
-Read-Host "キー入力待ち"
-Write-Host '移行先データストア：' $destination_ds
-Read-Host "キー入力待ち"
-Write-Host '移行先仮想ホスト：'　$destination_vmhost
-Read-Host "キー入力待ち"
-Write-Host '移行対象仮想マシン：' $vm_target
-Read-Host "キー入力待ち"
+#確認パラメータの表示
+Write-Host '[パラメータを確認]'
+Write-Host "移行元vCenterサーバー`t：" $source_vcenter
+Write-Host "移行先vCenterサーバー`t：" $destination_vcenter
+Write-Host "移行先データストア`t：" $destination_ds
+Write-Host "移行先仮想ホスト`t："　$destination_vmhost
+Write-Host "移行対象仮想マシン`t：" $vm_target
+
+#判断待ち
+$key = Read-Host "問題ないので継続（Y）,問題あるので中断（N）,デフォルト（N）"
+
+#判断処理
+$key
+switch ($key) {
+    'Y' { Write-Host 'スクリプトを継続します'  }
+    Default { Write-Host 'スクリプトを中断します' ; exit }
+}
 
 
 #エクスポート先ディレクトリ確認と作成
