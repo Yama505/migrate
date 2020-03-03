@@ -59,7 +59,6 @@ WriteLog('スクリプトの開始')
 #パラメーター目視確認
 #確認パラメータの表示
 Write-Host '[パラメータを確認]'
-Write-Host "移行対象仮想マシン`t:" $vm_target
 Write-Host "移行元vCenterサーバー`t：" $source_vcenter
 Write-Host "移行先vCenterサーバー`t：" $destination_vcenter
 Write-Host "移行先データストア`t：" $destination_ds
